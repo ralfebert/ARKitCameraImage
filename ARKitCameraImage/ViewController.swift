@@ -10,7 +10,7 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
@@ -37,6 +37,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let configuration = ARWorldTrackingConfiguration()
 
         // Run the view's session
+        sceneView.session.delegate = self
         sceneView.session.run(configuration)
     }
     
@@ -48,19 +49,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
 
     // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
+
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
         
+    }
+    
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+
+        guard let currentFrame = session.currentFrame else { return }
+        let capturedImage = currentFrame.capturedImage
+
+        debugPrint("Display size", UIScreen.main.bounds.size)
+        debugPrint("Camera frame resolution", CVPixelBufferGetWidth(capturedImage), CVPixelBufferGetHeight(capturedImage))
+
+        let ciimage = CIImage(cvImageBuffer: capturedImage)
+        let transform = currentFrame.displayTransform(for: .portrait, viewportSize: UIScreen.main.bounds.size)
+        var transformedImage = ciimage.transformed(by: transform)
+        debugPrint("Transformed size", transformedImage.extent.size)
+
     }
     
     func sessionWasInterrupted(_ session: ARSession) {
